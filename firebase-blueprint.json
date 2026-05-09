@@ -1,0 +1,38 @@
+{
+  "entities": {
+    "ChatTurn": {
+      "title": "Chat Turn",
+      "description": "A single turn in a conversation.",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "role": { "type": "string", "enum": ["user", "model"] },
+        "text": { "type": "string" },
+        "timestamp": { "type": "number" },
+        "duration": { "type": "number" },
+        "serverTime": { "type": "object", "format": "timestamp" }
+      },
+      "required": ["userId", "role", "text", "timestamp"]
+    },
+    "UserProfile": {
+      "title": "User Profile",
+      "description": "Profile information for a user.",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "voice": { "type": "string" },
+        "storeName": { "type": "string" }
+      }
+    }
+  },
+  "firestore": {
+    "chat_history": {
+      "schema": "ChatTurn",
+      "description": "Collection of all chat turns across all users."
+    },
+    "user_profiles": {
+      "schema": "UserProfile",
+      "description": "User profile documents stored by UID."
+    }
+  }
+}
