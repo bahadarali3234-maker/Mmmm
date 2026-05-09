@@ -352,17 +352,27 @@ export function useLiveAPI() {
             if (message.toolCall) {
               const responses = [];
               for (const call of message.toolCall.functionCalls) {
-                let result;
-                if (call.name === 'save_user_memory') {
-                  result = await saveUserInfo(call.args.info as string);
-                } else if (call.name === 'get_user_memory') {
-                  result = await getUserInfo();
-                }
-                
-                if (result) {
-                  responses.push({ 
-                    id: call.id, 
-                    response: { result }
+                try {
+                  let result: any;
+                  if (call.name === 'save_user_memory') {
+                    const saveRes = await saveUserInfo(call.args.info as string);
+                    result = { output: saveRes?.status || "Success" };
+                  } else if (call.name === 'get_user_memory') {
+                    const getRes = await getUserInfo();
+                    result = { output: getRes?.memory || "No memory found" };
+                  }
+                  
+                  if (result) {
+                    responses.push({ 
+                      id: call.id, 
+                      response: result
+                    });
+                  }
+                } catch (err) {
+                  console.error("Tool execution error:", err);
+                  responses.push({
+                    id: call.id,
+                    response: { error: err instanceof Error ? err.message : String(err) }
                   });
                 }
               }
