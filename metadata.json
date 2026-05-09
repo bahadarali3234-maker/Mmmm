@@ -1,6 +1,6 @@
 {
-  "name": "Humsafar AI",
-  "description": "An advanced, real-time multilingual AI Voice Assistant with a friendly personality, supporting Hindi, Urdu, and English conversation with live eyes.",
-  "requestFramePermissions": ["camera", "microphone", "display-capture"],
-  "majorCapabilities": ["live_api", "voice_conversation"]
+  "name": "Zara AI Assistant",
+  "description": "An advanced multimodal AI assistant (Zara) specialized for voice interactions with visual awareness and persistent memory.",
+  "requestFramePermissions": ["microphone", "camera", "display-capture"],
+  "majorCapabilities": ["voice_conversation"]
 }

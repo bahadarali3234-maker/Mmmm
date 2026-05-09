@@ -21,7 +21,8 @@
       "properties": {
         "name": { "type": "string" },
         "voice": { "type": "string" },
-        "storeName": { "type": "string" }
+        "storeName": { "type": "string" },
+        "memory": { "type": "string" }
       }
     }
   },

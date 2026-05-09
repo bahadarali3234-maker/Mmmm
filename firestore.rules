@@ -40,11 +40,11 @@ service cloud.firestore {
     }
 
     function isValidUserProfile(data) {
-      return data.keys().hasAll(['name'])
-        && data.keys().size() <= 3
-        && data.name is string && data.name.size() <= 100
-        && (data.get('voice', 'Zephyr') is string && data.voice.size() <= 50)
-        && (data.get('storeName', '') is string && data.storeName.size() <= 200);
+      return data.keys().size() <= 4
+        && (!data.keys().hasAny(['name']) || (data.name is string && data.name.size() <= 100))
+        && (!data.keys().hasAny(['voice']) || (data.voice is string && data.voice.size() <= 50))
+        && (!data.keys().hasAny(['storeName']) || (data.storeName is string && data.storeName.size() <= 200))
+        && (!data.keys().hasAny(['memory']) || (data.memory is string && data.memory.size() <= 10000));
     }
 
     // Collection Rules
@@ -56,10 +56,10 @@ service cloud.firestore {
     }
 
     match /user_profiles/{userId} {
-      allow read, write: if isOwner(userId);
-      allow create: if isOwner(userId) && isValidUserProfile(incoming()) && isValidId(userId);
-      allow update: if isOwner(userId) && isValidUserProfile(incoming())
-        && incoming().diff(existing()).affectedKeys().hasOnly(['name', 'voice', 'storeName']);
+      allow read: if isOwner(userId) || userId == 'guest_user';
+      allow create: if (isOwner(userId) || userId == 'guest_user') && isValidUserProfile(incoming()) && isValidId(userId);
+      allow update: if (isOwner(userId) || userId == 'guest_user') && isValidUserProfile(incoming())
+        && incoming().diff(existing()).affectedKeys().hasOnly(['name', 'voice', 'storeName', 'memory']);
     }
   }
 }
