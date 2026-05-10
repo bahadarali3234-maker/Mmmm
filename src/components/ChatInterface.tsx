@@ -10,15 +10,19 @@ import { motion, AnimatePresence } from 'motion/react';
 
 interface ChatInterfaceProps {
   liveAPI: any;
+  isGroqEnabled: boolean;
+  onToggleGroq: () => void;
 }
 
-export const ChatInterface: React.FC<ChatInterfaceProps> = ({ liveAPI }) => {
+export const ChatInterface: React.FC<ChatInterfaceProps> = ({ liveAPI, isGroqEnabled, onToggleGroq }) => {
   const { 
     isConnected, isSpeaking, transcript, error, 
     connect, stop, 
     isMuted, isCameraOn, isScreenSharing, stream,
     toggleMute, toggleCamera, toggleScreenShare
   } = liveAPI;
+
+  const isQuotaError = error?.toLowerCase().includes('quota');
 
   return (
     <div className="fixed inset-0 flex flex-col items-center justify-end p-12 pointer-events-none">
@@ -30,7 +34,7 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ liveAPI }) => {
               initial={{ y: 20, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
               exit={{ y: -20, opacity: 0 }}
-              className="flex justify-center"
+              className="flex flex-col items-center gap-6"
             >
               <Button
                 size="lg"
@@ -38,8 +42,20 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ liveAPI }) => {
                 className="h-20 px-12 rounded-[2.5rem] bg-white text-black hover:bg-zinc-200 text-xl font-bold uppercase tracking-widest gap-4 shadow-2xl transition-all hover:scale-105 active:scale-95"
               >
                 <Phone className="w-8 h-8 fill-current" />
-                Start Conversation
+                {isGroqEnabled ? "Start Groq Session" : "Start Conversation"}
               </Button>
+
+              <div className="flex flex-col items-center gap-2">
+                <p className="text-[10px] text-zinc-500 font-bold tracking-widest uppercase">
+                  {isGroqEnabled ? "Groq Backend Active" : "Gemini Multimodal Live Active"}
+                </p>
+                <button 
+                  onClick={onToggleGroq}
+                  className="text-[10px] text-primary hover:text-primary/80 underline font-bold tracking-widest uppercase transition-colors"
+                >
+                  Switch to {isGroqEnabled ? "Gemini (Full Vision)" : "Groq (Fast Text Backend)"}
+                </button>
+              </div>
             </motion.div>
           ) : (
             <motion.div
@@ -61,37 +77,44 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ liveAPI }) => {
                     />
                   ))}
                 </div>
-                <p className="text-[10px] font-black tracking-[0.4em] uppercase text-primary/80 animate-pulse">
+                <p className="text-[10px] font-black tracking-[0.4em] uppercase text-primary/80 animate-pulse text-center">
+                  {isGroqEnabled ? "Groq Mode: " : ""}
                   {isSpeaking ? "Receiving Transmission" : "Listening for input"}
                 </p>
+                {transcript && (
+                  <p className="text-zinc-400 text-xs italic line-clamp-1 max-w-sm">
+                    "{transcript}"
+                  </p>
+                )}
               </div>
 
               {/* Main Control Bar */}
               <div className="bg-[#1a1c22]/80 backdrop-blur-3xl px-8 py-5 rounded-[3rem] border border-white/10 shadow-2xl flex items-center gap-6">
-                {/* Camera Toggle */}
-                <ControlButton
-                  onClick={toggleCamera}
-                  active={isCameraOn}
-                  icon={isCameraOn ? Video : VideoOff}
-                  stream={isCameraOn ? stream : null}
-                />
+                {!isGroqEnabled && (
+                  <>
+                    <ControlButton
+                      onClick={toggleCamera}
+                      active={isCameraOn}
+                      icon={Video}
+                      stream={isCameraOn ? stream : null}
+                      isMirror
+                    />
+                    <ControlButton
+                      onClick={toggleScreenShare}
+                      active={isScreenSharing}
+                      icon={MonitorUp}
+                      stream={isScreenSharing ? stream : null}
+                    />
+                  </>
+                )}
 
-                {/* Screen Share Toggle */}
-                <ControlButton
-                  onClick={toggleScreenShare}
-                  active={isScreenSharing}
-                  icon={MonitorUp}
-                  stream={isScreenSharing ? stream : null}
-                />
-
-                {/* Mic Toggle */}
                 <ControlButton
                   onClick={toggleMute}
                   active={!isMuted}
                   icon={isMuted ? MicOff : Mic}
+                  disabled={isGroqEnabled} // Groq uses browser silence detection usually
                 />
 
-                {/* End Call Button */}
                 <button
                   onClick={stop}
                   className="w-20 h-16 rounded-[2rem] bg-red-600 hover:bg-red-500 text-white flex items-center justify-center shadow-lg transition-all hover:scale-110 active:scale-90"
@@ -103,14 +126,25 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ liveAPI }) => {
           )}
         </AnimatePresence>
 
-        {error && (
+        {(error || isQuotaError) && (
           <motion.div 
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
-            className="fixed bottom-36 left-1/2 -translate-x-1/2 flex items-center gap-2 text-red-400 text-[10px] font-bold bg-black/60 backdrop-blur-md px-6 py-3 rounded-full border border-red-500/30 uppercase tracking-widest shadow-2xl"
+            className="fixed bottom-36 left-1/2 -translate-x-1/2 flex flex-col items-center gap-3"
           >
-            <AlertCircle className="w-4 h-4" />
-            {error}
+            <div className="flex items-center gap-2 text-red-400 text-[10px] font-bold bg-black/60 backdrop-blur-md px-6 py-3 rounded-full border border-red-500/30 uppercase tracking-widest shadow-2xl">
+              <AlertCircle className="w-4 h-4" />
+              {error}
+            </div>
+            {isQuotaError && !isGroqEnabled && (
+              <Button 
+                onClick={onToggleGroq}
+                variant="outline"
+                className="bg-primary/20 hover:bg-primary/30 border-primary/50 text-white text-[10px] uppercase font-black tracking-widest rounded-full px-4 h-8"
+              >
+                Use Groq Fallback
+              </Button>
+            )}
           </motion.div>
         )}
       </div>
