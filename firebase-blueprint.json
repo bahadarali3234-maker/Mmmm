@@ -24,6 +24,19 @@
         "storeName": { "type": "string" },
         "memory": { "type": "string" }
       }
+    },
+    "Feedback": {
+      "title": "Conversation Feedback",
+      "description": "User feedback on specific responses or the overall session.",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "sessionId": { "type": "string" },
+        "rating": { "type": "string", "enum": ["up", "down"] },
+        "comment": { "type": "string" },
+        "timestamp": { "type": "string", "format": "date-time" }
+      },
+      "required": ["userId", "rating", "timestamp"]
     }
   },
   "firestore": {
@@ -34,6 +47,10 @@
     "user_profiles": {
       "schema": "UserProfile",
       "description": "User profile documents stored by UID."
+    },
+    "feedback": {
+      "schema": "Feedback",
+      "description": "User feedback entries."
     }
   }
 }

@@ -1,4 +1,6 @@
 import { useState, useCallback, useRef, useEffect } from 'react';
+import { auth, db } from '../lib/firebase';
+import { doc, getDoc, setDoc } from 'firebase/firestore';
 
 export function useGroqAPI() {
   const [isConnected, setIsConnected] = useState(false);
@@ -40,6 +42,16 @@ export function useGroqAPI() {
 
   const sendMessage = async (message: string) => {
     try {
+      // Save to Firebase memory asynchronously if it looks like a fact
+      if (message.length > 10 && (message.includes('mera naam') || message.includes('my name') || message.includes('pasand'))) {
+        const docId = auth.currentUser?.uid || 'guest_user';
+        const docRef = doc(db, 'user_profiles', docId);
+        getDoc(docRef).then(snap => {
+          const old = snap.exists() ? snap.data().memory || '' : '';
+          setDoc(docRef, { memory: old + '\n' + message }, { merge: true });
+        });
+      }
+
       const res = await fetch('/api/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -48,7 +60,7 @@ export function useGroqAPI() {
       const data = await res.json();
       
       if (data.response) {
-        setHistory(prev => [...prev, 
+        setHistory(prev => [...prev.slice(-10), // Keep last 10 turns for context
           { role: 'user', content: message },
           { role: 'assistant', content: data.response }
         ]);

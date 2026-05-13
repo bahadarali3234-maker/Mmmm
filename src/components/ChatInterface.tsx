@@ -8,6 +8,8 @@ import { Card } from '@/components/ui/card';
 import { useLiveAPI } from '@/hooks/useLiveAPI';
 import { motion, AnimatePresence } from 'motion/react';
 
+import { FeedbackRating } from './FeedbackRating';
+
 interface ChatInterfaceProps {
   liveAPI: any;
   isGroqEnabled: boolean;
@@ -26,6 +28,21 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ liveAPI, isGroqEna
 
   return (
     <div className="fixed inset-0 flex flex-col items-center justify-end p-12 pointer-events-none">
+      {/* Feedback System - visible when connected */}
+      <div className="absolute top-8 right-8 z-[60]">
+        <AnimatePresence>
+          {isConnected && (
+            <motion.div
+              initial={{ x: 50, opacity: 0 }}
+              animate={{ x: 0, opacity: 1 }}
+              exit={{ x: 50, opacity: 0 }}
+            >
+              <FeedbackRating sessionId={isConnected ? "active_session" : undefined} />
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
+
       <div className="w-full max-w-2xl pointer-events-auto">
         <AnimatePresence mode="wait">
           {!isConnected ? (

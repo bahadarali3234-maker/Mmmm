@@ -47,6 +47,15 @@ service cloud.firestore {
         && (!data.keys().hasAny(['memory']) || (data.memory is string && data.memory.size() <= 10000));
     }
 
+    function isValidFeedback(data) {
+      return data.keys().hasAll(['userId', 'rating', 'timestamp'])
+        && data.keys().size() <= 6
+        && data.userId == request.auth.uid
+        && data.rating in ['up', 'down']
+        && (data.get('comment', '') is string && data.get('comment', '').size() <= 1000)
+        && (data.get('sessionId', '') is string && data.get('sessionId', '').size() <= 128);
+    }
+
     // Collection Rules
     match /chat_history/{id} {
       allow create: if isOwner(incoming().userId) && isValidChatTurn(incoming()) && isValidId(id);
@@ -60,6 +69,13 @@ service cloud.firestore {
       allow create: if (isOwner(userId) || userId == 'guest_user') && isValidUserProfile(incoming()) && isValidId(userId);
       allow update: if (isOwner(userId) || userId == 'guest_user') && isValidUserProfile(incoming())
         && incoming().diff(existing()).affectedKeys().hasOnly(['name', 'voice', 'storeName', 'memory']);
+    }
+
+    match /feedback/{id} {
+      allow create: if isOwner(incoming().userId) && isValidFeedback(incoming()) && isValidId(id);
+      allow delete: if isOwner(existing().userId);
+      allow list: if isSignedIn() && resource.data.userId == request.auth.uid;
+      allow get: if isOwner(resource.data.userId);
     }
   }
 }
